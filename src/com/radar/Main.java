@@ -1,13 +1,46 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-void main() {
-    //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-    // to see how IntelliJ IDEA suggests fixing it.
-    IO.println(String.format("Hello and welcome!"));
+package com.radar;
 
-    for (int i = 1; i <= 5; i++) {
-        //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-        // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-        IO.println("i = " + i);
+import com.radar.model.*;
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Radar radar = new Radar(
+                "R001",
+                "Bangladesh Air Defence Radar",
+                500
+        );
+
+        Target aircraft = new Aircraft(
+                "A101",
+                new Coordinate(120, 80),
+                850,
+                10000
+        );
+
+        Target drone = new Drone(
+                "D201",
+                new Coordinate(50, 30),
+                120,
+                500
+        );
+
+        Target missile = new Missile(
+                "M301",
+                new Coordinate(300, 100),
+                1500,
+                2000
+        );
+
+        radar.addTarget(aircraft);
+        radar.addTarget(drone);
+        radar.addTarget(missile);
+
+        radar.displayRadarInfo();
+
+        for (Target target : radar.getTargets()) {
+            target.displayInfo();
+        }
     }
 }
