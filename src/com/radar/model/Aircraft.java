@@ -1,12 +1,11 @@
 package com.radar.model;
-
 public class Aircraft extends Target {
-
-    public Aircraft(String id,
-                    Coordinate coordinate,
+    // 🔥 Updated constructor (NO id)
+    public Aircraft(Coordinate position,
                     double speed,
                     double altitude) {
-        super(id, coordinate, speed, altitude);
+
+        super(position, speed, altitude);
     }
 
     @Override

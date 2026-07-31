@@ -2,12 +2,12 @@ package com.radar.model;
 
 public class Missile extends Target {
 
-    public Missile(String id,
-                   Coordinate coordinate,
+    public Missile(
+                   Coordinate position,
                    double speed,
                    double altitude) {
 
-        super(id, coordinate, speed, altitude);
+        super(position, speed, altitude);
     }
 
     @Override

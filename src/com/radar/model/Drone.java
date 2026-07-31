@@ -2,12 +2,12 @@ package com.radar.model;
 
 public class Drone extends Target {
 
-    public Drone(String id,
-                 Coordinate coordinate,
+    public Drone(
+                 Coordinate position,
                  double speed,
                  double altitude) {
 
-        super(id, coordinate, speed, altitude);
+        super( position, speed, altitude);
     }
 
     @Override
