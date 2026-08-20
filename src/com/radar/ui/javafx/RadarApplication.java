@@ -1,9 +1,5 @@
 package com.radar.ui.javafx;
 
-import com.radar.model.Coordinate;
-import com.radar.model.Drone;
-import com.radar.model.Missile;
-import com.radar.model.Target;
 import com.radar.simulation.SimulationEngine;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -59,19 +55,13 @@ public class RadarApplication extends javafx.application.Application {
         Label title = new Label("RADAR TARGET TRACKING SIMULATOR");
         title.setStyle("-fx-text-fill: #00ff00; -fx-font-size: 16px; -fx-font-weight: bold;");
 
-        Button addAircraftBtn = createButton("Add Aircraft");
-        addAircraftBtn.setOnAction(e -> addTarget("Aircraft"));
-
-        Button addDroneBtn = createButton("Add Drone");
-        addDroneBtn.setOnAction(e -> addTarget("Drone"));
-
-        Button addMissileBtn = createButton("Add Missile");
-        addMissileBtn.setOnAction(e -> addTarget("Missile"));
+        Label autoSpawnLabel = new Label("AUTO-SPAWN ACTIVE");
+        autoSpawnLabel.setStyle("-fx-text-fill: #00ff00; -fx-font-size: 12px;");
 
         Button toggleBtn = createButton("Pause");
         toggleBtn.setOnAction(e -> toggleSimulation(toggleBtn));
 
-        controls.getChildren().addAll(title, addAircraftBtn, addDroneBtn, addMissileBtn, toggleBtn);
+        controls.getChildren().addAll(title, autoSpawnLabel, toggleBtn);
         return controls;
     }
 
@@ -105,26 +95,6 @@ public class RadarApplication extends javafx.application.Application {
         Button btn = new Button(text);
         btn.setStyle("-fx-text-fill: #00ff00; -fx-background-color: #003300; -fx-border-color: #00ff00;");
         return btn;
-    }
-
-    private void addTarget(String type) {
-
-        double x = Math.random() * 35 + 2;
-        double y = Math.random() * 8 + 1;
-        double speed = type.equals("Aircraft") ? 800 : type.equals("Drone") ? 120 : 1500;
-        double altitude = type.equals("Aircraft") ? 10000 : type.equals("Drone") ? 500 : 2000;
-
-        Coordinate position = new Coordinate(x, y);
-        Target target = switch (type) {
-            case "Aircraft" -> new com.radar.model.Aircraft(position, speed, altitude);
-            case "Drone" -> new Drone(position, speed, altitude);
-            case "Missile" -> new Missile(position, speed, altitude);
-            default -> null;
-        };
-
-        if (target != null) {
-            engine.addTarget(target);
-        }
     }
 
     private void toggleSimulation(Button btn) {

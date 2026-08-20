@@ -148,14 +148,18 @@ public class RadarPane extends Pane {
                 }
             }
 
+            symbol = getTargetEmoji(t);
+
             gc.setFill(color);
             gc.beginPath();
             gc.arc(tx, ty, 6, 6, 0, 360);
             gc.fill();
 
             gc.setFill(Color.WHITE);
+            gc.setFont(Font.font("Segoe UI Emoji", 18));
+            gc.fillText(symbol, tx, ty - 11);
             gc.setFont(Font.font("Monospaced", 9));
-            gc.fillText(symbol + t.getId(), tx, ty - 10);
+            gc.fillText("#" + t.getId(), tx, ty + 12);
         }
 
         for (Interceptor interceptor : engine.getInterceptors()) {
@@ -181,8 +185,18 @@ public class RadarPane extends Pane {
             gc.fill();
 
             gc.setFill(Color.WHITE);
+            gc.setFont(Font.font("Segoe UI Emoji", 16));
+            gc.fillText("✈️", ix, iy - 10);
             gc.setFont(Font.font("Monospaced", 8));
             gc.fillText(interceptor.getInterceptorId(), ix, iy + 12);
+        }
+
+        gc.setFill(Color.WHITE);
+        gc.setFont(Font.font("Segoe UI Emoji", 24));
+        for (SimulationEngine.CollisionEffect collision : engine.getCollisions()) {
+            double cx = PADDING + collision.getCoordinate().getX() * xScale;
+            double cy = PADDING + collision.getCoordinate().getY() * yScale;
+            gc.fillText("💥", cx, cy);
         }
 
         gc.setStroke(Color.rgb(0, 180, 0));
@@ -200,5 +214,14 @@ public class RadarPane extends Pane {
         gc.fillText("RADAR", borderX + 5, borderY + 5);
         gc.fillText("Targets: " + engine.getTargets().size(), borderX + 5, borderY + 20);
         gc.fillText("Interceptors: " + engine.getInterceptors().size(), borderX + 5, borderY + 35);
+    }
+
+    private String getTargetEmoji(Target target) {
+        return switch (target.getType()) {
+            case "Aircraft" -> "✈️";
+            case "Drone" -> "🛸";
+            case "Missile" -> "🚀";
+            default -> "?";
+        };
     }
 }

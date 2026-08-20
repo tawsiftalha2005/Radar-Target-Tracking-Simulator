@@ -15,9 +15,12 @@ public class SimulationEngine {
     private final int FPS = 5;
     private final int WIDTH = 40;
     private final int HEIGHT = 20;
+    private static final int MAX_TARGETS = 8;
+    private static final double SPAWN_CHANCE_PER_TICK = 0.08;
 
     private List<Target> targets = new ArrayList<>();
     private List<Interceptor> interceptors = new ArrayList<>();
+    private List<CollisionEffect> collisions = new ArrayList<>();
 
     private Random random = new Random();
     private List<String> eventLog = new ArrayList<>();
@@ -194,10 +197,16 @@ public class SimulationEngine {
      */
     private void spawnInitialTargets() {
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 3; i++) {
+            spawnRandomTarget();
+        }
+    }
 
-            int x = random.nextInt(WIDTH);
-            int y = random.nextInt(HEIGHT / 2);
+    /** Adds one randomly selected aircraft, drone, or missile to the radar. */
+    private void spawnRandomTarget() {
+
+            int x = 2 + random.nextInt(WIDTH - 4);
+            int y = 1 + random.nextInt(4);
 
             Coordinate position =
                     new Coordinate(x, y);
@@ -233,7 +242,7 @@ public class SimulationEngine {
             }
 
             targets.add(target);
-        }
+            logEvent(target.getType() + " #" + target.getId() + " entered radar area");
     }
 
     /**
@@ -293,6 +302,9 @@ public class SimulationEngine {
      */
     public void update() {
 
+        spawnTargetsRandomly();
+        updateCollisionEffects();
+
         // Clear radar grid
         for (int i = 0; i < HEIGHT; i++) {
 
@@ -322,6 +334,23 @@ public class SimulationEngine {
 
         // Draw interceptors
         drawInterceptors();
+    }
+
+    private void spawnTargetsRandomly() {
+        if (targets.size() < MAX_TARGETS && random.nextDouble() < SPAWN_CHANCE_PER_TICK) {
+            spawnRandomTarget();
+        }
+    }
+
+    private void updateCollisionEffects() {
+        Iterator<CollisionEffect> iterator = collisions.iterator();
+        while (iterator.hasNext()) {
+            CollisionEffect collision = iterator.next();
+            collision.remainingTicks--;
+            if (collision.remainingTicks <= 0) {
+                iterator.remove();
+            }
+        }
     }
 
     /**
@@ -420,6 +449,9 @@ public class SimulationEngine {
                 );
 
                 target.setStatus(Target.Status.DESTROYED);
+
+                collisions.add(new CollisionEffect(
+                        new Coordinate(target.getCoordinate().getX(), target.getCoordinate().getY()), 5));
 
                 targets.remove(target);
 
@@ -636,6 +668,10 @@ public class SimulationEngine {
         return Collections.unmodifiableList(interceptors);
     }
 
+    public List<CollisionEffect> getCollisions() {
+        return Collections.unmodifiableList(collisions);
+    }
+
     public List<String> getEventLog() {
         return Collections.unmodifiableList(eventLog);
     }
@@ -650,5 +686,19 @@ public class SimulationEngine {
 
     public void setRunning(boolean running) {
         this.running = running;
+    }
+
+    public static final class CollisionEffect {
+        private final Coordinate coordinate;
+        private int remainingTicks;
+
+        private CollisionEffect(Coordinate coordinate, int remainingTicks) {
+            this.coordinate = coordinate;
+            this.remainingTicks = remainingTicks;
+        }
+
+        public Coordinate getCoordinate() {
+            return coordinate;
+        }
     }
 }

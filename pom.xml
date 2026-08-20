@@ -33,6 +33,8 @@
     </dependencies>
 
     <build>
+        <!-- This project keeps Java packages directly under src/. -->
+        <sourceDirectory>${project.basedir}/src</sourceDirectory>
         <plugins>
 
             <plugin>
@@ -50,6 +52,7 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.radar.ui.javafx.RadarApplication</mainClass>
+
                 </configuration>
             </plugin>
 
