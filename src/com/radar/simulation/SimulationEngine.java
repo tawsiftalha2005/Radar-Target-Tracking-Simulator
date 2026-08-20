@@ -3,6 +3,7 @@ package com.radar.simulation;
 import com.radar.model.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -233,6 +234,13 @@ public class SimulationEngine {
 
             targets.add(target);
         }
+    }
+
+    /**
+     * Advances the simulation by one tick.
+     */
+    public void step() {
+        update();
     }
 
     /**
@@ -612,5 +620,35 @@ public class SimulationEngine {
                         + id
                         + " not found"
         );
+    }
+
+    public List<Target> getTargets() {
+        return Collections.unmodifiableList(targets);
+    }
+
+    public void addTarget(Target target) {
+        if (target != null) {
+            targets.add(target);
+        }
+    }
+
+    public List<Interceptor> getInterceptors() {
+        return Collections.unmodifiableList(interceptors);
+    }
+
+    public List<String> getEventLog() {
+        return Collections.unmodifiableList(eventLog);
+    }
+
+    public CommandCenter getCommandCenter() {
+        return commandCenter;
+    }
+
+    public boolean isRunning() {
+        return running;
+    }
+
+    public void setRunning(boolean running) {
+        this.running = running;
     }
 }
