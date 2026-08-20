@@ -18,7 +18,8 @@ public abstract class Target {
         NEW,
         DETECTED,
         AUTHORIZED,
-        UNAUTHORIZED
+        UNAUTHORIZED,
+        DESTROYED
     }
     public int getId() {             // 🔥 int getter
         return id;

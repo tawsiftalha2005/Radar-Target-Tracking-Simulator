@@ -2,228 +2,615 @@ package com.radar.simulation;
 
 import com.radar.model.*;
 
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 
-
 public class SimulationEngine {
+
     private boolean running = true;
+
     private final int FPS = 5;
     private final int WIDTH = 40;
     private final int HEIGHT = 20;
+
     private List<Target> targets = new ArrayList<>();
+    private List<Interceptor> interceptors = new ArrayList<>();
+
     private Random random = new Random();
     private List<String> eventLog = new ArrayList<>();
 
-
     private char[][] grid;
 
-    public SimulationEngine() {
-        grid = new char[HEIGHT][WIDTH];
-        spawnInitialTargets();
+    // Defence system
+    private CommandCenter commandCenter;
+    private Airbase airbase;
+    private MissileBattery missileBattery;
 
+    public SimulationEngine() {
+
+        grid = new char[HEIGHT][WIDTH];
+
+        // Create Airbase
+        airbase = new Airbase(
+                "AB001",
+                "Main Airbase"
+        );
+
+        // Create Missile Battery
+        missileBattery = new MissileBattery(
+                "MB001",
+                "Main Missile Battery"
+        );
+
+        // Create Command Centre
+        commandCenter = new CommandCenter(
+                "CC001",
+                "National Air Defence Command",
+                airbase,
+                missileBattery
+        );
+
+        // Create initial targets
+        spawnInitialTargets();
     }
 
     private void logEvent(String message) {
+
         eventLog.add(message);
-        // limit log size (last 10)
-        if (eventLog.size() > 10) {
+
+        if (eventLog.size() > 15) {
             eventLog.remove(0);
         }
     }
 
+    /**
+     * Detect new targets using radar.
+     */
     private void detectTargets() {
+
         for (Target t : targets) {
 
             if (t.getStatus() == Target.Status.NEW) {
 
                 t.setStatus(Target.Status.DETECTED);
 
-                logEvent(t.getClass().getSimpleName() + " detected");
+                logEvent(
+                        t.getType()
+                                + " #"
+                                + t.getId()
+                                + " detected by radar"
+                );
 
+                // Random authorization for simulation
                 if (random.nextBoolean()) {
+
                     t.setStatus(Target.Status.AUTHORIZED);
-                    logEvent(t.getClass().getSimpleName() + " authorized");
+
+                    logEvent(
+                            t.getType()
+                                    + " #"
+                                    + t.getId()
+                                    + " authorized"
+                    );
+
                 } else {
+
                     t.setStatus(Target.Status.UNAUTHORIZED);
-                    logEvent("⚠ Unauthorized " + t.getClass().getSimpleName());
+
+                    logEvent(
+                            "⚠ Unauthorized "
+                                    + t.getType()
+                                    + " #"
+                                    + t.getId()
+                    );
+
+                    processUnauthorizedTarget(t);
                 }
             }
         }
     }
 
-    private void spawnInitialTargets() {
-        for (int i = 0; i < 5; i++) {
+    /**
+     * Sends unauthorized target to Command Centre.
+     */
+    private void processUnauthorizedTarget(Target target) {
 
-            int x = random.nextInt(WIDTH);
-            int y = random.nextInt(HEIGHT / 2); // top area
+        logEvent(
+                "→ Target #"
+                        + target.getId()
+                        + " data sent to Command Centre"
+        );
 
-            Coordinate pos = new Coordinate(x, y);
+        ThreatLevel threatLevel =
+                commandCenter.analyzeThreat(target);
 
-            int type = random.nextInt(3);
+        String decision =
+                commandCenter.makeInterceptionDecision(target);
 
-            Target t;
+        logEvent(
+                "Command Centre: Target #"
+                        + target.getId()
+                        + " | Threat: "
+                        + threatLevel
+        );
 
-            if (type == 0) {
-                t = new Aircraft(pos, 800, 10000);
-            } else if (type == 1) {
-                t = new Drone( pos, 120, 500);
-            } else {
-                t = new Missile( pos, 1500, 2000);
+        logEvent(
+                "Command Centre Decision: "
+                        + decision
+        );
+
+        /*
+         * Ask Command Centre to process
+         * and send the command to the
+         * appropriate defence unit.
+         */
+        commandCenter.processTarget(target);
+
+        /*
+         * Create an interceptor according
+         * to the Command Centre decision.
+         */
+        if (decision.equals("FIGHTER_INTERCEPTOR")) {
+
+            Interceptor fighter =
+                    airbase.launchFighter(target);
+
+            if (fighter != null) {
+
+                interceptors.add(fighter);
+
+                logEvent(
+                        "✈ Fighter "
+                                + fighter.getInterceptorId()
+                                + " launched for Target #"
+                                + target.getId()
+                );
             }
 
-            targets.add(t);
+        } else if (decision.equals("GROUND_INTERCEPTOR")) {
+
+            Interceptor interceptor =
+                    missileBattery.launchInterceptor(target);
+
+            if (interceptor != null) {
+
+                interceptors.add(interceptor);
+
+                logEvent(
+                        "🚀 Ground Interceptor "
+                                + interceptor.getInterceptorId()
+                                + " launched for Target #"
+                                + target.getId()
+                );
+            }
         }
     }
 
+    /**
+     * Creates initial targets.
+     */
+    private void spawnInitialTargets() {
+
+        for (int i = 0; i < 5; i++) {
+
+            int x = random.nextInt(WIDTH);
+            int y = random.nextInt(HEIGHT / 2);
+
+            Coordinate position =
+                    new Coordinate(x, y);
+
+            int type =
+                    random.nextInt(3);
+
+            Target target;
+
+            if (type == 0) {
+
+                target = new Aircraft(
+                        position,
+                        800,
+                        10000
+                );
+
+            } else if (type == 1) {
+
+                target = new Drone(
+                        position,
+                        120,
+                        500
+                );
+
+            } else {
+
+                target = new Missile(
+                        position,
+                        1500,
+                        2000
+                );
+            }
+
+            targets.add(target);
+        }
+    }
+
+    /**
+     * Starts the simulation.
+     */
     public void start() {
 
-        long frameDelay = 1000 / FPS;
+        long frameDelay =
+                1000 / FPS;
 
         while (running) {
 
-            long startTime = System.currentTimeMillis();
+            long startTime =
+                    System.currentTimeMillis();
 
             update();
             render();
 
-            long endTime = System.currentTimeMillis();
-            long elapsed = endTime - startTime;
+            long endTime =
+                    System.currentTimeMillis();
 
-            long sleepTime = frameDelay - elapsed;
+            long elapsed =
+                    endTime - startTime;
+
+            long sleepTime =
+                    frameDelay - elapsed;
 
             if (sleepTime > 0) {
+
                 try {
+
                     Thread.sleep(sleepTime);
+
                 } catch (InterruptedException e) {
-                    e.printStackTrace();
+
+                    Thread.currentThread().interrupt();
+
+                    running = false;
+
+                    logEvent(
+                            "Simulation interrupted"
+                    );
                 }
             }
         }
     }
 
+    /**
+     * Updates the complete simulation.
+     */
     public void update() {
-        // Clear grid
+
+        // Clear radar grid
         for (int i = 0; i < HEIGHT; i++) {
+
             for (int j = 0; j < WIDTH; j++) {
+
                 grid[i][j] = ' ';
             }
         }
-        // Place Radar (bottom-center)
+
+        // Radar position
         int radarX = WIDTH / 2;
         int radarY = HEIGHT - 3;
-        grid[radarY][radarX] = 'R'; // later emoji দিবো
 
+        grid[radarY][radarX] = 'R';
+
+        // Move targets
         moveTargets();
+
+        // Detect targets
         detectTargets();
 
+        // Move interceptors
+        updateInterceptors();
 
-        // Place targets
-        for (Target t : targets) {
-            int x = (int) t.getCoordinate().getX();
-            int y = (int) t.getCoordinate().getY();
-            if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT) {
-                // 🔥 show ID (last digit)
-                grid[y][x] = Character.forDigit(t.getId() % 10, 10);
-            }
-        }
+        // Draw targets
+        drawTargets();
+
+        // Draw interceptors
+        drawInterceptors();
     }
 
+    /**
+     * Moves all targets.
+     */
     private void moveTargets() {
+
         for (Target t : targets) {
-            double x = t.getCoordinate().getX();
-            double y = t.getCoordinate().getY();
+
+            double x =
+                    t.getCoordinate().getX();
+
+            double y =
+                    t.getCoordinate().getY();
+
             if (t instanceof Aircraft) {
-                // move diagonally
+
                 x += 0.5;
                 y += 0.2;
+
             } else if (t instanceof Drone) {
-                // random movement
-                x += random.nextInt(3) - 1; // -1,0,1
-                y += random.nextInt(2);     // 0 বা 1
+
+                x += random.nextInt(3) - 1;
+                y += random.nextInt(2);
+
             } else if (t instanceof Missile) {
-                // fast downward
+
                 y += 1.5;
             }
-            // set new position
+
             t.getCoordinate().setX(x);
             t.getCoordinate().setY(y);
         }
-        // remove targets out of map
+
+        // Remove targets outside radar area
         targets.removeIf(t ->
-                t.getCoordinate().getY() >= HEIGHT ||
-                        t.getCoordinate().getX() >= WIDTH ||
-                        t.getCoordinate().getX() < 0
+                t.getCoordinate().getY() >= HEIGHT
+                        || t.getCoordinate().getX() >= WIDTH
+                        || t.getCoordinate().getX() < 0
         );
     }
 
-    private char getSymbol(Target t) {
-        if (t instanceof Aircraft) {
-            return t.getStatus() == Target.Status.UNAUTHORIZED ? 'a' : 'A';
+    /**
+     * Moves interceptors toward their assigned targets.
+     */
+    private void updateInterceptors() {
+
+        Iterator<Interceptor> iterator =
+                interceptors.iterator();
+
+        while (iterator.hasNext()) {
+
+            Interceptor interceptor =
+                    iterator.next();
+
+            Target target =
+                    interceptor.getTarget();
+
+            // Target no longer exists
+            if (target == null
+                    || !targets.contains(target)) {
+
+                iterator.remove();
+
+                continue;
+            }
+
+            // Move interceptor toward target
+            interceptor.moveTowardsTarget();
+
+            double distance =
+                    calculateDistance(
+                            interceptor.getCoordinate(),
+                            target.getCoordinate()
+                    );
+
+            logEvent(
+                    interceptor.getInterceptorId()
+                            + " moving toward Target #"
+                            + target.getId()
+                            + " | Distance: "
+                            + String.format("%.2f", distance)
+            );
+
+            if (distance <= 1.0) {
+
+                logEvent(
+                        "💥 INTERCEPTION SUCCESSFUL!"
+                );
+
+                logEvent(
+                        "Target #"
+                                + target.getId()
+                                + " intercepted by "
+                                + interceptor.getInterceptorId()
+                );
+
+                target.setStatus(Target.Status.DESTROYED);
+
+                targets.remove(target);
+
+                iterator.remove();
+            }
+        }
+    }
+
+    /**
+     * Calculates distance between two coordinates.
+     */
+    private double calculateDistance(
+            Coordinate first,
+            Coordinate second
+    ) {
+
+        double dx =
+                first.getX() - second.getX();
+
+        double dy =
+                first.getY() - second.getY();
+
+        return Math.sqrt(
+                dx * dx + dy * dy
+        );
+    }
+
+    /**
+     * Draws targets on radar.
+     */
+    private void drawTargets() {
+
+        for (Target t : targets) {
+
+            int x =
+                    (int) t.getCoordinate().getX();
+
+            int y =
+                    (int) t.getCoordinate().getY();
+
+            if (x >= 0
+                    && x < WIDTH
+                    && y >= 0
+                    && y < HEIGHT) {
+
+                grid[y][x] =
+                        getTargetSymbol(t);
+            }
+        }
+    }
+
+    /**
+     * Draws interceptors on radar.
+     */
+    private void drawInterceptors() {
+
+        for (Interceptor interceptor : interceptors) {
+
+            int x =
+                    (int) interceptor.getCoordinate().getX();
+
+            int y =
+                    (int) interceptor.getCoordinate().getY();
+
+            if (x >= 0
+                    && x < WIDTH
+                    && y >= 0
+                    && y < HEIGHT) {
+
+                if (interceptor.getType()
+                        .equals("FIGHTER")) {
+
+                    grid[y][x] = 'F';
+
+                } else {
+
+                    grid[y][x] = 'I';
+                }
+            }
+        }
+    }
+
+    /**
+     * Returns target symbol.
+     */
+    private char getTargetSymbol(Target target) {
+
+        if (target instanceof Aircraft) {
+
+            return target.getStatus()
+                    == Target.Status.UNAUTHORIZED
+                    ? 'a'
+                    : 'A';
         }
 
-        if (t instanceof Drone) {
-            return t.getStatus() == Target.Status.UNAUTHORIZED ? 'd' : 'D';
+        if (target instanceof Drone) {
+
+            return target.getStatus()
+                    == Target.Status.UNAUTHORIZED
+                    ? 'd'
+                    : 'D';
         }
 
-        if (t instanceof Missile) {
-            return t.getStatus() == Target.Status.UNAUTHORIZED ? 'm' : 'M';
+        if (target instanceof Missile) {
+
+            return target.getStatus()
+                    == Target.Status.UNAUTHORIZED
+                    ? 'm'
+                    : 'M';
         }
 
         return '?';
     }
 
+    /**
+     * Renders the radar screen.
+     */
     public void render() {
-        // Clear screen
+
         System.out.print("\033[H\033[2J");
         System.out.flush();
-// Top border
+
+        // Top border
         System.out.print("+");
-        for (int i = 0; i < WIDTH; i++) System.out.print("-");
+
+        for (int i = 0; i < WIDTH; i++) {
+            System.out.print("-");
+        }
+
         System.out.println("+");
 
-// Grid print
+        // Radar grid
         for (int i = 0; i < HEIGHT; i++) {
+
             System.out.print("|");
+
             for (int j = 0; j < WIDTH; j++) {
+
                 System.out.print(grid[i][j]);
             }
+
             System.out.println("|");
         }
 
-// Bottom border
+        // Bottom border
         System.out.print("+");
-        for (int i = 0; i < WIDTH; i++) System.out.print("-");
+
+        for (int i = 0; i < WIDTH; i++) {
+            System.out.print("-");
+        }
+
         System.out.println("+");
 
-        System.out.println("RADAR ACTIVE | FPS: " + FPS);
+        System.out.println(
+                "RADAR ACTIVE | FPS: " + FPS
+        );
 
-// Event log
+        System.out.println(
+                "Legend: R=Radar | A=Aircraft | D=Drone | M=Missile | F=Fighter | I=Interceptor"
+        );
+
         System.out.println("\n=== EVENT LOG ===");
+
         for (String log : eventLog) {
+
             System.out.println(log);
         }
     }
 
+    /**
+     * Manually destroys a target.
+     */
     public void destroyTarget(int id) {
-        Iterator<Target> iterator = targets.iterator();
+
+        Iterator<Target> iterator =
+                targets.iterator();
 
         while (iterator.hasNext()) {
+
             Target t = iterator.next();
 
             if (t.getId() == id) {
 
                 iterator.remove();
 
-                logEvent("💥 Target " + id + " destroyed");
+                logEvent(
+                        "💥 Target "
+                                + id
+                                + " destroyed"
+                );
+
                 return;
             }
         }
 
-        logEvent("❌ Target " + id + " not found");
+        logEvent(
+                "❌ Target "
+                        + id
+                        + " not found"
+        );
     }
-
 }
