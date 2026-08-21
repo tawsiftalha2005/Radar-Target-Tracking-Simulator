@@ -541,7 +541,7 @@ Possible future improvements include:
 | Interceptor System   | 🟢 Completed      |
 | Target Tracking      | 🟢 Completed      |
 | Interception Events  | 🟢 Completed      |
-| JavaFX GUI           | 🟡 In Development |
+| JavaFX GUI           | 🟢 Completed      ||
 
 ---
 
@@ -581,7 +581,7 @@ This project is licensed under the **MIT License**.
 
 ## 👨‍💻 Author
 
-**Tawsif Talha**
+**Md. Wahid Tawsif Talha**
 
 GitHub:
 [https://github.com/tawsiftalha2005](https://github.com/tawsiftalha2005)
