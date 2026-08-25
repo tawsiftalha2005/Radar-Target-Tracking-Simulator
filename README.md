@@ -1,4 +1,4 @@
-# 🛰️ Radar Target Tracking Simulator
+# 📡 Radar Target Tracking Simulator
 
 ![Java](https://img.shields.io/badge/Java-26-orange?style=for-the-badge&logo=openjdk)
 ![JavaFX](https://img.shields.io/badge/JavaFX-26.0.2-blue?style=for-the-badge)
@@ -21,7 +21,7 @@ The **Radar Target Tracking Simulator** is an Object-Oriented Programming projec
 The system simulates three major types of aerial targets:
 
 - ✈️ Aircraft
-- 🚁 Drones
+- 🛸 Drones
 - 🚀 Missiles
 
 When a target enters the radar area, the system detects the target and determines whether it is **AUTHORIZED** or **UNAUTHORIZED**.
@@ -94,7 +94,7 @@ The simulator supports three types of targets:
 | Target      | Description                                  |
 | ----------- | -------------------------------------------- |
 | ✈️ Aircraft | Aerial target with diagonal movement         |
-| 🚁 Drone    | Aerial target with variable movement         |
+| 🛸 Drone    | Aerial target with variable movement         |
 | 🚀 Missile  | Target moving downward toward the radar area |
 
 ---
