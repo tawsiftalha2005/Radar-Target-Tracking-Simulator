@@ -147,7 +147,7 @@ HIGH Threat
         ↓
 FIGHTER_INTERCEPTOR
         ↓
-Airbase
+     Airbase
         ↓
 Fighter Deployed
         ↓
